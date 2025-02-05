@@ -172,6 +172,9 @@
         }
 
         function updateCurrentSceneName() {
+            if (file_list.length === 0){
+                return
+            }
             document.getElementById("currentLabel").textContent = file_list[scene_index].name;
             document.getElementById("currentIdx").textContent = scene_index + 1;
             document.getElementById("currentCount").textContent = file_list.length;
@@ -185,7 +188,7 @@
         }
 
         function previousModel() {
-            scene_index = (scene_index + 1) % file_list.length;
+            scene_index = (scene_index - 1) % file_list.length;
             viewer = document.getElementById("viewer");
             viewer.setAttribute("src", file_list[scene_index].fullPath);
             updateCurrentSceneName();
