@@ -200,43 +200,69 @@
             return filePath.toLowerCase().endsWith('.' + extension.toLowerCase());
         }
 
-        function glob(item, extension) {
+        async function glob(item, extension) {
             if (item.isDirectory) {
-                let directoryReader = item.createReader();
-                // TODO: To read all files in a directory, readEntries needs
-                // to be called repeatedly until it returns an empty array.
-                // In Chromium-based browsers, the following example will
-                // only return a max of 100 entries 
-                directoryReader.readEntries((entries) => {
-                    entries.forEach((entry) => {
-                        glob(entry, extension);
-                    });
-                });
+                const dirReader = item.createReader();
+                await readAllDirectoryEntries(dirReader, extension);
             } else {
                 if (hasExtension(item.name, extension)) {
-                    console.log(item.fullPath);
-                    file_list.push(item);
-                    if (file_list.length == 1) {
-                        // always showing index 0
-                        viewer.setAttribute("src", file_list[0].fullPath);
+                    // Get file handle
+                    const file = await new Promise((resolve) => {
+                        item.file(resolve);
+                    });
+
+                    // Create object URL
+                    const url = URL.createObjectURL(file);
+                    file_list.push({
+                        name: item.name,
+                        fullPath: url,
+                        cleanup: () => URL.revokeObjectURL(url)
+                    });
+
+                    // If this is the first file, display it
+                    if (file_list.length === 1) {
+                        viewer.setAttribute("src", url);
                         updateCurrentSceneName();
                     }
                 }
             }
         }
 
-        function handleDrop(e) {
+        async function readAllDirectoryEntries(dirReader, extension) {
+            const entries = [];
+            let readEntries = await new Promise((resolve) => {
+                dirReader.readEntries(resolve);
+            });
+
+            while (readEntries.length > 0) {
+                entries.push(...readEntries);
+                // Continue reading if there are more entries
+                // (readEntries can only read up to 100 files per call)
+                readEntries = await new Promise((resolve) => {
+                    dirReader.readEntries(resolve);
+                });
+            }
+
+            // Process all entries recursively
+            for (const entry of entries) {
+                await glob(entry, extension);
+            }
+        }
+
+        async function handleDrop(e) {
             const items = e.dataTransfer.items;
             e.preventDefault();
 
             // recursively collect files with the expected extension
             file_list = [];
             scene_index = 0;
+
+            // process all files and directories
             for (let i = 0; i < items.length; i++) {
                 let item = items[i].webkitGetAsEntry();
 
                 if (item) {
-                    glob(item, "glb");
+                    await glob(item, "glb");
                 }
             }
         }
