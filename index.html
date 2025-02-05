@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Drag and Drop</title>
+    <style>
+        .drop-zone {
+            width: 1280px;
+            height: 100px;
+            border: 2px dashed #ccc;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            transition: border-color 0.3s ease;
+        }
+
+        .drop-zone.dragover {
+            border-color: #000;
+            background-color: #f0f0f0;
+        }
+
+        model-viewer {
+            width: 1280px;
+            height: 720px;
+        }
+
+        .content {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            -webkit-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+
+        .center-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+    <nav class="navbar navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">GlobViewer</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll"
+                aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </nav>
+
+
+    <div class="container">
+        <script type="module"
+            src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+        <div>
+            <model-viewer src="" ar shadow-intensity="1" camera-controls touch-action="pan-y" id="viewer">
+            </model-viewer>
+        </div>
+        <div id="dropZone" class="drop-zone">Drag and drop files and folders here.</div>
+
+        <div class="center-button">
+            <div class="btn-toolbar me-2" role="toolbar" aria-label="Toolbar with button groups">
+                <div class="btn-group me-2" role="group" aria-label="Third group">
+                    <button type="button" class="btn btn-primary" id="previousBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="feather feather-chevron-left">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <div class="btn-group me-2" role="group" aria-label="Second group">
+                    <button type="button" class="btn btn-primary" id="currentLabel">Waiting for scenes...</button>
+                    <button type="button" class="btn btn-primary" id="currentIdx">0</button>
+                    <button type="button" class="btn btn-primary">/</button>
+                    <button type="button" class="btn btn-primary" id="currentCount">0</button>
+                </div>
+                <div class="btn-group me-2" role="group" aria-label="Third group">
+                    <button type="button" class="btn btn-primary" id="nextBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="feather feather-chevron-right">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.requestStorageAccess({ localStorage: true });
+
+        // list of file names
+        var base_file_list = [];
+        var handler = {
+            set(target, property, value) {
+                const oldLength = target.length;
+                target[prop] = value;
+                if (target.length !== oldLength) {
+                    console.log(`Length changed from ${oldLength} to ${target.length}`);
+                    document.getElementById("currentCount").textContent = value;
+                }
+                target[property] = value;
+                return true;
+            }
+        };
+        file_list = new Proxy(base_file_list, handler);
+        var scene_index = 0;
+
+        // previou/next model buttons
+        document.getElementById("previousBtn").addEventListener("click", previousModel);
+        document.getElementById("nextBtn").addEventListener("click", nextModel);
+
+        // left/right are keybinds to previous/next scene
+        document.addEventListener("keydown",
+            function (event) {
+                if (event.keyCode === 37) { // left key
+                    event.preventDefault();
+                    previousModel();
+                } else if (event.keyCode === 39) { // right key
+                    event.preventDefault();
+                    nextModel();
+                }
+            });
+
+        // Prevent default drag behaviors
+        const dropZone = document.getElementById('dropZone');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        // Highlight drop zone when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        // Handle dropped files
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight(e) {
+            dropZone.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('dragover');
+        }
+
+        function updateCurrentSceneName() {
+            document.getElementById("currentLabel").textContent = file_list[scene_index].name;
+            document.getElementById("currentIdx").textContent = scene_index + 1;
+            document.getElementById("currentCount").textContent = file_list.length;
+        }
+
+        function nextModel() {
+            scene_index = (scene_index + 1) % file_list.length;
+            viewer = document.getElementById("viewer");
+            viewer.setAttribute("src", file_list[scene_index].fullPath);
+            updateCurrentSceneName();
+        }
+
+        function previousModel() {
+            scene_index = (scene_index + 1) % file_list.length;
+            viewer = document.getElementById("viewer");
+            viewer.setAttribute("src", file_list[scene_index].fullPath);
+            updateCurrentSceneName();
+        }
+
+        function hasExtension(filePath, extension) {
+            // Remove leading dot if present in the extension parameter
+            extension = extension.startsWith('.') ? extension.slice(1) : extension;
+
+            // Convert to lowercase for case-insensitive comparison
+            return filePath.toLowerCase().endsWith('.' + extension.toLowerCase());
+        }
+
+        function glob(item, extension) {
+            if (item.isDirectory) {
+                let directoryReader = item.createReader();
+                // TODO: To read all files in a directory, readEntries needs
+                // to be called repeatedly until it returns an empty array.
+                // In Chromium-based browsers, the following example will
+                // only return a max of 100 entries 
+                directoryReader.readEntries((entries) => {
+                    entries.forEach((entry) => {
+                        glob(entry, extension);
+                    });
+                });
+            } else {
+                if (hasExtension(item.name, extension)) {
+                    console.log(item.fullPath);
+                    file_list.push(item);
+                    if (file_list.length == 1) {
+                        // always showing index 0
+                        viewer.setAttribute("src", file_list[0].fullPath);
+                        updateCurrentSceneName();
+                    }
+                }
+            }
+        }
+
+        function handleDrop(e) {
+            const items = e.dataTransfer.items;
+            e.preventDefault();
+
+            // recursively collect files with the expected extension
+            file_list = [];
+            scene_index = 0;
+            for (let i = 0; i < items.length; i++) {
+                let item = items[i].webkitGetAsEntry();
+
+                if (item) {
+                    glob(item, "glb");
+                }
+            }
+        }
+    </script>
+
+</body>
+
+</html>
