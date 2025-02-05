@@ -112,12 +112,11 @@
         var handler = {
             set(target, property, value) {
                 const oldLength = target.length;
-                target[prop] = value;
+                target[property] = value;
                 if (target.length !== oldLength) {
                     console.log(`Length changed from ${oldLength} to ${target.length}`);
-                    document.getElementById("currentCount").textContent = value;
+                    updateCurrentSceneName();
                 }
-                target[property] = value;
                 return true;
             }
         };
@@ -254,7 +253,7 @@
             e.preventDefault();
 
             // recursively collect files with the expected extension
-            file_list = [];
+            file_list.length = 0;
             scene_index = 0;
 
             // process all files and directories
