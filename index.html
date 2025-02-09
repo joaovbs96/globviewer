@@ -99,10 +99,9 @@
                     </button>
                 </div>
                 <div class="btn-group me-2" role="group" aria-label="Second group">
-                    <button type="button" class="btn btn-primary" id="currentLabel">Waiting for scenes...</button>
-                    <button type="button" class="btn btn-primary" id="currentIdx">0</button>
-                    <button type="button" class="btn btn-primary">/</button>
-                    <button type="button" class="btn btn-primary" id="currentCount">0</button>
+                    <button type="button" class="btn btn-primary disabled">
+                        <span id="currentLabel">Waiting for scenes...  </span><span class="badge text-bg-secondary" id="currentIdx">0 / 0</span>
+                    </button>
                 </div>
                 <div class="btn-group me-2" role="group" aria-label="Third group">
                     <button type="button" class="btn btn-primary" id="nextBtn">
@@ -119,6 +118,9 @@
 
     <script>
         document.requestStorageAccess({ localStorage: true });
+
+        // viewer variable
+        var viewer = document.getElementById("viewer");
 
         // list of file names
         var base_file_list = [];
@@ -205,21 +207,24 @@
             if (file_list.length === 0) {
                 return
             }
-            document.getElementById("currentLabel").textContent = file_list[scene_index].name;
-            document.getElementById("currentIdx").textContent = scene_index + 1;
-            document.getElementById("currentCount").textContent = file_list.length;
+            document.getElementById("currentLabel").textContent = `${file_list[scene_index].name} `;
+            document.getElementById("currentIdx").textContent = `${scene_index + 1} / ${file_list.length}`;
+        }
+
+        function mod(n, m) {
+            return ((n % m) + m) % m;
         }
 
         function nextModel() {
-            scene_index = (scene_index + 1) % file_list.length;
-            viewer = document.getElementById("viewer");
+            scene_index = mod(scene_index + 1, file_list.length);
+            console.log('Changing to Index:', scene_index);
             viewer.setAttribute("src", file_list[scene_index].fullPath);
             updateCurrentSceneName();
         }
 
         function previousModel() {
-            scene_index = (scene_index - 1) % file_list.length;
-            viewer = document.getElementById("viewer");
+            scene_index = mod(scene_index - 1, file_list.length);
+            console.log('Changing to Index:', scene_index);
             viewer.setAttribute("src", file_list[scene_index].fullPath);
             updateCurrentSceneName();
         }
