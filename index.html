@@ -56,6 +56,12 @@
             margin-bottom: 20px;
             z-index: 1;
         }
+
+        .button-primary-override:hover {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            background-image: none !important;
+        }
     </style>
 </head>
 
@@ -76,18 +82,34 @@
         </div>
     </nav>
 
-
     <div class="viewer-container">
         <script type="module"
             src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
         <div>
             <model-viewer environment-image="./studio_small_08_4k.jpg" skybox-image="./studio_small_08_4k.jpg" src="" ar
-                shadow-intensity="1" camera-controls touch-action="pan-y" autoplay max-field-of-view="60deg" id="viewer">
+                shadow-intensity="1" camera-controls touch-action="pan-y" autoplay max-field-of-view="60deg"
+                id="viewer">
+                <div class="progress-bar hide" slot="progress-bar">
+                    <div class="update-bar"></div>
+                </div>
             </model-viewer>
         </div>
+
         <div id="dropZone"></div>
 
-        <div class="center-button">
+        <div id="helpText" class="row text-center align-middle">
+            <p></p>
+            <p class="fs-3"><svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" fill="currentColor"
+                    class="bi bi-folder-fill" viewBox="0 0 16 16">
+                    <path
+                        d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3m-8.322.12q.322-.119.684-.12h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981z" />
+                </svg>
+                <br>
+                Drag and Drop a folder with glbs.
+            </p>
+        </div>
+
+        <div class="center-button" id="button-container">
             <div class="btn-toolbar me-2" role="toolbar" aria-label="Toolbar with button groups">
                 <div class="btn-group me-2" role="group" aria-label="Third group">
                     <button type="button" class="btn btn-primary" id="previousBtn">
@@ -99,8 +121,9 @@
                     </button>
                 </div>
                 <div class="btn-group me-2" role="group" aria-label="Second group">
-                    <button type="button" class="btn btn-primary disabled">
-                        <span id="currentLabel">Waiting for scenes...  </span><span class="badge text-bg-secondary" id="currentIdx">0 / 0</span>
+                    <button type="button" class="btn btn-primary button-primary-override">
+                        <span id="currentLabel">Drag and Drop a folder with Models... </span><span
+                            class="badge text-bg-secondary" id="currentIdx"></span>
                     </button>
                 </div>
                 <div class="btn-group me-2" role="group" aria-label="Third group">
@@ -139,6 +162,7 @@
         var scene_index = 0;
 
         // previou/next model buttons
+        document.getElementById("button-container").style.visibility = "hidden";
         document.getElementById("previousBtn").addEventListener("click", previousModel);
         document.getElementById("nextBtn").addEventListener("click", nextModel);
 
@@ -216,6 +240,9 @@
         }
 
         function nextModel() {
+            if (file_list.length == 0) {
+                return
+            }
             scene_index = mod(scene_index + 1, file_list.length);
             console.log('Changing to Index:', scene_index);
             viewer.setAttribute("src", file_list[scene_index].fullPath);
@@ -223,6 +250,9 @@
         }
 
         function previousModel() {
+            if (file_list.length == 0) {
+                return
+            }
             scene_index = mod(scene_index - 1, file_list.length);
             console.log('Changing to Index:', scene_index);
             viewer.setAttribute("src", file_list[scene_index].fullPath);
@@ -307,6 +337,10 @@
             e.preventDefault();
             hideDropZone();
 
+            // show buttons, hide help text
+            document.getElementById("button-container").style.visibility = "visible";
+            document.getElementById("helpText").style.visibility = "hidden";
+            
             console.log("Starting drop handler");
             console.log("Number of dropped items:", items.length);
 
