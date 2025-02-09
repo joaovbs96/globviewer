@@ -6,29 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Drag and Drop</title>
     <style>
-        .drop-zone {
-            width: 1280px;
-            height: 100px;
-            border: 2px dashed #ccc;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 20px;
-            transition: border-color 0.3s ease;
-        }
-
-        .drop-zone.dragover {
-            border-color: #000;
-            background-color: #f0f0f0;
-        }
-
-        model-viewer {
-            width: 1280px;
-            height: 720px;
+        div#dropZone {
+            background: gray;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 999;
+            opacity: 0.6;
+            visibility: hidden;
         }
 
         .content {
@@ -43,6 +30,31 @@
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+
+        .viewer-container {
+            display: grid;
+            width: 100%;
+            height: calc(100vh - 56px);
+            /* Full height minus navbar */
+        }
+
+        /* Make elements stack in the same grid cell */
+        .viewer-container>* {
+            grid-area: 1 / 1;
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Center the controls and ensure they're on top */
+        .center-button {
+            align-self: end;
+            justify-self: center;
+            margin-bottom: 20px;
+            z-index: 1;
         }
     </style>
 </head>
@@ -65,14 +77,15 @@
     </nav>
 
 
-    <div class="container">
+    <div class="viewer-container">
         <script type="module"
             src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
         <div>
-            <model-viewer src="" ar shadow-intensity="1" camera-controls touch-action="pan-y" id="viewer">
+            <model-viewer environment-image="./studio_small_08_4k.jpg" skybox-image="./studio_small_08_4k.jpg" src="" ar
+                shadow-intensity="1" camera-controls touch-action="pan-y" autoplay max-field-of-view="60deg" id="viewer">
             </model-viewer>
         </div>
-        <div id="dropZone" class="drop-zone">Drag and drop files and folders here.</div>
+        <div id="dropZone"></div>
 
         <div class="center-button">
             <div class="btn-toolbar me-2" role="toolbar" aria-label="Toolbar with button groups">
@@ -139,20 +152,37 @@
                 }
             });
 
-        // Prevent default drag behaviors
-        const dropZone = document.getElementById('dropZone');
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
+        var dropZone = document.getElementById('dropZone');
 
-        // Highlight drop zone when item is dragged over it
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
+        function showDropZone() {
+            dropZone.style.visibility = "visible";
+        }
+        function hideDropZone() {
+            dropZone.style.visibility = "hidden";
+        }
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
+        function allowDrag(e) {
+            if (true) {  // Test that the item being dragged is a valid one
+                e.dataTransfer.dropEffect = 'copy';
+                e.preventDefault();
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            hideDropZone();
+
+            alert('Drop!');
+        }
+
+        // event listeners
+        window.addEventListener('dragenter', function (e) {
+            showDropZone();
+        });
+        dropZone.addEventListener('dragenter', allowDrag);
+        dropZone.addEventListener('dragover', allowDrag);
+        dropZone.addEventListener('dragleave', function (e) {
+            hideDropZone();
         });
 
         // Handle dropped files
@@ -172,7 +202,7 @@
         }
 
         function updateCurrentSceneName() {
-            if (file_list.length === 0){
+            if (file_list.length === 0) {
                 return
             }
             document.getElementById("currentLabel").textContent = file_list[scene_index].name;
@@ -204,17 +234,19 @@
 
         async function glob(item, extension) {
             if (item.isDirectory) {
+                console.log('Processing directory:', item.name);
                 const dirReader = item.createReader();
                 await readAllDirectoryEntries(dirReader, extension);
             } else {
                 if (hasExtension(item.name, extension)) {
                     // Get file handle
+                    console.log('Processing file:', item.name);
                     const file = await new Promise((resolve) => {
                         item.file(resolve);
                     });
 
-                    // Create object URL
                     const url = URL.createObjectURL(file);
+                    console.log('Created URL for:', item.name, url);
                     file_list.push({
                         name: item.name,
                         fullPath: url,
@@ -232,28 +264,53 @@
 
         async function readAllDirectoryEntries(dirReader, extension) {
             const entries = [];
-            let readEntries = await new Promise((resolve) => {
-                dirReader.readEntries(resolve);
-            });
+            let readEntries;
 
-            while (readEntries.length > 0) {
-                entries.push(...readEntries);
-                // Continue reading if there are more entries
-                // (readEntries can only read up to 100 files per call)
-                readEntries = await new Promise((resolve) => {
-                    dirReader.readEntries(resolve);
-                });
-            }
+            console.log("Starting to read directory entries");
 
-            // Process all entries recursively
-            for (const entry of entries) {
-                await glob(entry, extension);
+            try {
+                do {
+                    readEntries = await new Promise((resolve, reject) => {
+                        dirReader.readEntries((results) => {
+                            console.log(`Read batch of ${results.length} entries`);
+                            resolve(results);
+                        }, reject);
+                    });
+
+                    entries.push(...readEntries);
+                    console.log(`Total entries so far: ${entries.length}`);
+
+                } while (readEntries.length > 0);
+
+                console.log(`Processing ${entries.length} entries`);
+
+                // Process entries
+                for (const entry of entries) {
+                    await glob(entry, extension);
+                }
+
+                console.log("Finished processing all entries in this directory");
+
+            } catch (error) {
+                console.error("Error reading directory:", error);
+                throw error;
             }
         }
 
         async function handleDrop(e) {
             const items = e.dataTransfer.items;
             e.preventDefault();
+            hideDropZone();
+
+            console.log("Starting drop handler");
+            console.log("Number of dropped items:", items.length);
+
+            // Clean up existing object URLs
+            for (const item of file_list) {
+                if (item.cleanup) {
+                    item.cleanup();
+                }
+            }
 
             // recursively collect files with the expected extension
             file_list.length = 0;
@@ -261,6 +318,7 @@
 
             // process all files and directories
             for (let i = 0; i < items.length; i++) {
+                console.log(`Processing drop item ${i + 1}/${items.length}`);
                 let item = items[i].webkitGetAsEntry();
 
                 if (item) {
