@@ -69,6 +69,10 @@
             border-color: #0d6efd !important;
             background-image: none !important;
         }
+
+        .skybox {
+            filter: blur(10px);
+        }
     </style>
 </head>
 
@@ -81,28 +85,33 @@
 
     <nav class="navbar navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
         <div class="container">
-            <a class="navbar-brand" href="#">GlobViewer</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll"
-                aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <a class="navbar-brand" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor"
+                    class="bi bi-asterisk d-inline-block align-text-top" viewBox="0 0 16 16">
+                    <path
+                        d="M8 0a1 1 0 0 1 1 1v5.268l4.562-2.634a1 1 0 1 1 1 1.732L10 8l4.562 2.634a1 1 0 1 1-1 1.732L9 9.732V15a1 1 0 1 1-2 0V9.732l-4.562 2.634a1 1 0 1 1-1-1.732L6 8 1.438 5.366a1 1 0 0 1 1-1.732L7 6.268V1a1 1 0 0 1 1-1" />
+                </svg>
+                GlobViewer
+            </a>
 
             <div class="ms-auto d-flex">
                 <div id="settingsBtn" class="text-light me-3" style="cursor: pointer;" data-bs-toggle="offcanvas"
-                    data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
-                    <a href="#" class="link-light" data-bs-toggle="tooltip" data-bs-title="Settings" data-bs-placement="bottom">
+                    data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings">
+                    <a href="#" class="link-light" data-bs-toggle="tooltip" data-bs-title="Settings"
+                        data-bs-placement="bottom">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                            class="bi bi-sliders" viewBox="0 0 16 16">
+                            class="bi bi-sliders d-inline-block align-text-middle" viewBox="0 0 16 16">
                             <path fill-rule="evenodd"
                                 d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z" />
                         </svg>
                     </a>
                 </div>
                 <div id="helpBtn" class="text-light" style="cursor: pointer;" data-bs-toggle="offcanvas"
-                    data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
-                    <a href="#" class="link-light" data-bs-toggle="tooltip" data-bs-title="Help" data-bs-placement="bottom">
+                    data-bs-target="#offcanvasHelp" aria-controls="offcanvasHelp">
+                    <a href="#" class="link-light" data-bs-toggle="tooltip" data-bs-title="Help"
+                        data-bs-placement="bottom">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                            class="bi bi-question-circle-fill" viewBox="0 0 16 16">
+                            class="bi bi-question-circle-fill d-inline-block align-text-middle" viewBox="0 0 16 16">
                             <path
                                 d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.496 6.033h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286a.237.237 0 0 0 .241.247m2.325 6.443c.61 0 1.029-.394 1.029-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94 0 .533.425.927 1.01.927z" />
                         </svg>
@@ -113,9 +122,36 @@
         </div>
     </nav>
 
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasSettings" aria-labelledby="offcanvasExampleLabel">
         <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="offcanvasExampleLabel">Offcanvas</h5>
+            <h5 class="offcanvas-title" id="offcanvasExampleLabel">Settings</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+
+            <div class="card">
+                <div class="card-header">
+                    Environment Settings
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Select Environment Map</h5>
+                    <select class="form-select" aria-label="Default select example" id="dropdownEnvironment">
+                        <option value="studio_small_08_4k.jpg" selected>Studio (default)</option>
+                        <option value="wrestling_gym_4k.jpg">Indoor</option>
+                        <option value="kloofendal_48d_partly_cloudy_puresky_4k.jpg">Outdoor - Cloudy</option>
+                        <option value="overcast_soil_puresky_4k.jpg">Outdoor - Overcast</option>
+                        <option value="symmetrical_garden_02_4k.jpg">Outdoor - Garden</option>
+                        <option value="cobblestone_street_night_4k.jpg">Outdoor - Night</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasHelp" aria-labelledby="offcanvasExampleLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasExampleLabel">Help</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
@@ -140,9 +176,9 @@
         <script type="module"
             src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
         <div>
-            <model-viewer environment-image="./studio_small_08_4k.jpg" skybox-image="./studio_small_08_4k.jpg" src="" ar
-                shadow-intensity="1" camera-controls touch-action="pan-y" autoplay max-field-of-view="60deg"
-                id="viewer">
+            <model-viewer environment-image="hdris/studio_small_08_4k.jpg"
+                skybox-image="hdris/studio_small_08_4k.jpg" src="" ar shadow-intensity="1" camera-controls
+                touch-action="pan-y" autoplay max-field-of-view="60deg" id="viewer">
                 <div class="progress-bar hide" slot="progress-bar">
                     <div class="update-bar"></div>
                 </div>
@@ -175,9 +211,9 @@
                     </button>
                 </div>
                 <div class="btn-group me-2" role="group" aria-label="Second group">
-                    <button type="button" class="btn btn-primary button-primary-override">
-                        <span id="currentLabel">Drag and Drop a folder with Models... </span><span
-                            class="badge text-bg-secondary" id="currentIdx"></span>
+                    <button type="button" class="btn btn-primary" id="labelBtn">
+                        <span id="currentLabel">Drag and Drop a folder with Models... </span>
+                        <span class="badge text-bg-secondary" id="currentIdx"></span>
                     </button>
                 </div>
                 <div class="btn-group me-2" role="group" aria-label="Third group">
@@ -223,6 +259,7 @@
         document.getElementById("button-container").style.visibility = "hidden";
         document.getElementById("previousBtn").addEventListener("click", previousModel);
         document.getElementById("nextBtn").addEventListener("click", nextModel);
+        document.getElementById("labelBtn").addEventListener("click", copyPath);
 
         // left/right are keybinds to previous/next scene
         document.addEventListener("keydown",
@@ -250,13 +287,6 @@
                 e.dataTransfer.dropEffect = 'copy';
                 e.preventDefault();
             }
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            hideDropZone();
-
-            alert('Drop!');
         }
 
         // event listeners
@@ -316,6 +346,15 @@
             viewer.setAttribute("src", file_list[scene_index].fullPath);
             updateCurrentSceneName();
         }
+
+        function copyPath() {
+            navigator.clipboard.writeText(file_list[scene_index].name);
+        }
+
+        var loadFile = function (event) {
+            var image = document.getElementById('output');
+            image.src = URL.createObjectURL(event.target.files[0]);
+        };
 
         function hasExtension(filePath, extension) {
             // Remove leading dot if present in the extension parameter
@@ -423,6 +462,23 @@
                 }
             }
         }
+
+        document.getElementById("dropdownEnvironment").addEventListener("change",
+            function (event) {
+                // Get the selected option
+                const selectedOption = event.target.options[event.target.selectedIndex];
+                
+                // Get the value
+                const value = selectedOption.value;
+                
+                console.log('Selected value:', value);
+                
+                // update viewer environment map
+                viewer.setAttribute("skybox-image", `hdris/${value}`);
+                viewer.setAttribute("environment-image", `hdris/${value}`);
+            });
+
+
     </script>
 
 </body>
