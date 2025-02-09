@@ -95,6 +95,17 @@
             </a>
 
             <div class="ms-auto d-flex">
+                <div id="screenshotBtn" class="text-light me-3" style="cursor: pointer;">
+                    <a href="#" class="link-light" data-bs-toggle="tooltip" data-bs-title="Screenshot"
+                        data-bs-placement="bottom">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                            class="bi bi-camera-fill d-inline-block align-text-middle" viewBox="0 0 16 16">
+                            <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
+                            <path
+                                d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0" />
+                        </svg>
+                    </a>
+                </div>
                 <div id="settingsBtn" class="text-light me-3" style="cursor: pointer;" data-bs-toggle="offcanvas"
                     data-bs-target="#offcanvasSettings" aria-controls="offcanvasSettings">
                     <a href="#" class="link-light" data-bs-toggle="tooltip" data-bs-title="Settings"
@@ -176,9 +187,9 @@
         <script type="module"
             src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
         <div>
-            <model-viewer environment-image="hdris/studio_small_08_4k.jpg"
-                skybox-image="hdris/studio_small_08_4k.jpg" src="" ar shadow-intensity="1" camera-controls
-                touch-action="pan-y" autoplay max-field-of-view="60deg" id="viewer">
+            <model-viewer environment-image="hdris/studio_small_08_4k.jpg" skybox-image="hdris/studio_small_08_4k.jpg"
+                src="" ar shadow-intensity="1" camera-controls touch-action="pan-y" autoplay max-field-of-view="60deg"
+                id="viewer">
                 <div class="progress-bar hide" slot="progress-bar">
                     <div class="update-bar"></div>
                 </div>
@@ -238,6 +249,8 @@
 
         // viewer variable
         var viewer = document.getElementById("viewer");
+
+        document.getElementById("screenshotBtn").addEventListener("click", takeScreenshot);
 
         // list of file names
         var base_file_list = [];
@@ -467,17 +480,67 @@
             function (event) {
                 // Get the selected option
                 const selectedOption = event.target.options[event.target.selectedIndex];
-                
+
                 // Get the value
                 const value = selectedOption.value;
-                
+
                 console.log('Selected value:', value);
-                
+
                 // update viewer environment map
                 viewer.setAttribute("skybox-image", `hdris/${value}`);
                 viewer.setAttribute("environment-image", `hdris/${value}`);
             });
 
+        async function takeScreenshot() {
+            // Wait for the model to be fully loaded
+            await viewer.updateComplete;
+
+            const options = {
+                filename: 'model-screenshot.png'
+            };
+
+            // Create a canvas element
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            try {
+                // Get the current scene as a blob
+                const blob = await viewer.toBlob({
+                    idealAspect: true
+                });
+
+                // Convert blob to data URL
+                const img = new Image();
+                img.src = URL.createObjectURL(blob);
+
+                // Wait for image to load
+                await new Promise((resolve) => {
+                    img.onload = () => {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        context.drawImage(img, 0, 0, img.width, img.height);
+                        URL.revokeObjectURL(img.src); // Clean up
+                        resolve();
+                    };
+                });
+
+                // Convert to data URL
+                const dataUrl = canvas.toDataURL('image/png');
+
+                // Download if filename is provided
+                if (options.filename) {
+                    const link = document.createElement('a');
+                    link.download = options.filename;
+                    link.href = dataUrl;
+                    link.click();
+                }
+
+                return dataUrl;
+            } catch (error) {
+                console.error('Error taking screenshot:', error);
+                throw error;
+            }
+        }
 
     </script>
 
