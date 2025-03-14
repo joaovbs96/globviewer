@@ -8,6 +8,8 @@ Simple single-file <model-viewer> based 3D model viewer.
 * Click the info button to see the list of extensions in use by the model.
 * Click the settings button to change the environment map to one of the predefined ones.
 
+![GlobViewer](viewer.png)
+
 Original environment images from PolyHaven (Converted using [MonoGrid GainMap creator](https://gainmap-creator.monogrid.com/)):
   * [Studio Small 08](https://polyhaven.com/a/studio_small_08)
   * [Overcast Soil Pure Sky](https://polyhaven.com/a/overcast_soil_puresky)
